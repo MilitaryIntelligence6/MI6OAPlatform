@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="BspLocalSettings">
+    <option name="projectSyncType">
+      <map>
+        <entry key="D:/ProgramFile/SoftWare/Develope/Git/GitPkg/Java/math/calcEco/pkg/smile" value="PREVIEW" />
+        <entry key="D:/ProgramFile/SoftWare/Develope/Git/GitPkg/Java/math/calcEco/pkg/smile/demo" value="PREVIEW" />
+      </map>
+    </option>
+  </component>
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/pom.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+  <component name="ScalaSbtSettings">
+    <option name="customLauncherEnabled" value="true" />
+    <option name="customLauncherPath" value="D:\ProgramFile\SoftWare\Develope\Java\JVMLang\Scala\Sbt\sbt\bin\sbt-launch.jar" />
+    <option name="customVMPath" />
+  </component>
+</project>
