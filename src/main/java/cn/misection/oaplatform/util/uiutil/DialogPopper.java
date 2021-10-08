@@ -9,10 +9,10 @@ import javax.swing.*;
  * @Description TODO
  * @CreateTime 2021年06月14日 21:07:00
  */
-public class DialogPopper {
+public final class DialogPopper {
 
     private DialogPopper() {
-        throw new RuntimeException("here is no DialogPopper instance for you");
+        throw new UnsupportedOperationException(String.format("here are no %s instance for you", getClass().getName()));
     }
 
     public static void unknownError() {

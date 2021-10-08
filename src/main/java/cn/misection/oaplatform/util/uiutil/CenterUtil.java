@@ -10,7 +10,7 @@ import java.awt.*;
  * @Description TODO
  * @CreateTime 2021年06月12日 00:25:00
  */
-public class CenterUtil {
+public final class CenterUtil {
 
     /**
      * 得到显示器屏幕的宽高;
@@ -20,7 +20,7 @@ public class CenterUtil {
     public static final int SCREEN_HEIGHT = Toolkit.getDefaultToolkit().getScreenSize().height;
 
     private CenterUtil() {
-        throw new RuntimeException("here is no CenterUtil instance for you");
+        throw new UnsupportedOperationException(String.format("here are no %s instance for you", getClass().getName()));
     }
 
     public static void keepCenter(JFrame frame) {

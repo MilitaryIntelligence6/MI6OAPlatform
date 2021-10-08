@@ -1,6 +1,7 @@
 package cn.misection.oaplatform.util.uiutil;
 
-import cn.misection.oaplatform.config.PropertiesBundle;
+import cn.misection.oaplatform.config.ResourceBundle;
+import cn.misection.oaplatform.util.proputil.PropertiesProxy;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
@@ -13,15 +14,15 @@ import javax.swing.*;
  * @Description TODO
  * @CreateTime 2021年06月12日 00:13:00
  */
-public class SkinManager {
+public final class SkinManager {
 
     private static final boolean beenDark = Boolean.parseBoolean(
-            String.valueOf(
-                    PropertiesProxy.getProperty(
-                            PropertiesBundle.DARK.getLiteral())));
+            String.valueOf(PropertiesProxy
+                    .instanceWithBundle(ResourceBundle.CONFIG)
+                    .getProperty("dark")));
 
     private SkinManager() {
-        throw new RuntimeException("here are no skinProxy instance for you");
+        throw new UnsupportedOperationException(String.format("here are no %s instance for you", getClass().getName()));
     }
 
     public static void chooseSetSkinMod() {
@@ -33,9 +34,9 @@ public class SkinManager {
     }
 
     public static void changeDarkMod() {
-        PropertiesProxy.putAndSave(
-                PropertiesBundle.DARK.getLiteral(),
-                String.valueOf(!beenDark));
+        PropertiesProxy
+                .instanceWithBundle(ResourceBundle.CONFIG)
+                .putAndSave("dark", String.valueOf(!beenDark));
     }
 
     public static void setDarkSkin() {

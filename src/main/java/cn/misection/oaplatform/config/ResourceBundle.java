@@ -14,6 +14,8 @@ public enum ResourceBundle {
      */
     CONFIG("./res/properties/config.properties"),
 
+    USER("./res/properties/user.properties"),
+
     CONDITION_DB("./res/db/condition.db"),
 
     ICON("./res/assets/JavaSunFlowMisection.png"),

@@ -2,11 +2,7 @@ package cn.misection.oaplatform;
 
 import cn.misection.oaplatform.approval.controller.ApprovalController;
 import cn.misection.oaplatform.util.crackutil.CrackUtil;
-import com.teamdev.jxbrowser.chromium.Browser;
-import com.teamdev.jxbrowser.chromium.swing.BrowserView;
-
-import javax.swing.*;
-import java.awt.*;
+import cn.misection.oaplatform.util.uiutil.SkinManager;
 
 /**
  * @author Military Intelligence 6 root
@@ -18,6 +14,7 @@ import java.awt.*;
 public class OaApplication {
     static {
         CrackUtil.crackJxBrowser();
+        SkinManager.setDarkSkin();
     }
 
     public static void main(String[] args) {
