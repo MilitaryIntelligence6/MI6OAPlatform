@@ -4,11 +4,13 @@ import cn.misection.oaplatform.approval.ui.ApprovalFrame;
 import cn.misection.oaplatform.common.constant.JsPool;
 import cn.misection.oaplatform.config.BuildConfig;
 import cn.misection.oaplatform.config.ResourceBundle;
+import cn.misection.oaplatform.util.nullsafe.NullSafe;
 import cn.misection.oaplatform.util.proputil.PropertiesProxy;
 import cn.misection.oaplatform.util.uiutil.DialogPopper;
 import com.teamdev.jxbrowser.chromium.events.*;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +24,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class ApprovalController {
 
-    private final ApprovalFrame frame = new ApprovalFrame();
+    private final ApprovalFrame frame;
+
+    private final FuncPanelController funcPanelController;
 
     private final ScheduledExecutorService singleThreadPool = Executors.newScheduledThreadPool(1);
 
@@ -30,18 +34,17 @@ public class ApprovalController {
             PropertiesProxy.instanceWithBundle(
                     ResourceBundle.CONFIG).getProperty("interval")));
 
-    public ApprovalController() {
+    public ApprovalController(ApprovalFrame frame) {
+        this.frame = frame;
+        this.funcPanelController = new FuncPanelController(frame.getFuncPanel());
         init();
-//        frame.getBrowser().loadURL("https://qxj.iswufe.info/QJ/FSJCheckQJLists");
-        frame.getBrowser().loadURL("https://webvpn.swufe.edu" +
-                ".cn/https/77726476706e69737468656265737421e1ef4bd22e237f45780dc7a596532c/QJ/FSJCheckQJLists");
-//        frame.getBrowser().executeJavaScript("alert(\"hello, jxbrwser\")");
     }
 
     private void init() {
         initController();
         initActionListener();
         initCallback();
+        initState();
     }
 
     private void initController() {
@@ -103,6 +106,21 @@ public class ApprovalController {
 
     }
 
+    private void initState() {
+        boolean vpn = Boolean.parseBoolean(
+                String.valueOf(
+                        PropertiesProxy.instanceWithBundle(
+                                ResourceBundle.CONFIG)
+                                .getProperty("vpn")));
+        if (vpn) {
+            frame.getBrowser()
+                    .loadURL("https://webvpn.swufe.edu" +
+                            ".cn/https/77726476706e69737468656265737421e1ef4bd22e237f45780dc7a596532c/QJ/FSJCheckQJLists");
+        } else {
+            frame.getBrowser().loadURL("https://qxj.iswufe.info/QJ/FSJCheckQJLists");
+        }
+    }
+
     private void autoLogin() {
         frame.getBrowser().executeJavaScript(String.format(
                 JsPool.AUTO_LOGIN.value(),
@@ -122,7 +140,57 @@ public class ApprovalController {
 
     private void autoApprovalSingleTask() {
         if (BuildConfig.DEBUG) {
-
+            System.out.println("loop unit");
         }
     }
+
+    private static class FuncPanelController {
+
+        private final ApprovalFrame.FuncPanel funcPanel;
+
+        private final PropertiesProxy userProxy = PropertiesProxy.instanceWithBundle(ResourceBundle.USER);
+
+        public FuncPanelController(ApprovalFrame.FuncPanel funcPanel) {
+            this.funcPanel = funcPanel;
+            init();
+        }
+
+        private void init() {
+            initState();
+            initController();
+            initActionListener();
+        }
+
+        private void initState() {
+            funcPanel.getUsernameField().setText(NullSafe.safeString(userProxy.getProperty("username")));
+            funcPanel.getPasswordField().setText(NullSafe.safeString(userProxy.getProperty("password")));
+        }
+
+        private void initController() {
+
+        }
+
+        private void initActionListener() {
+            funcPanel.getClearButton().addActionListener(
+                    (ActionEvent e) -> {
+                        funcPanel.getPasswordField().setText("");
+                        funcPanel.getUsernameField().setText("");
+                    }
+            );
+
+            funcPanel.getSavaButton().addActionListener(
+                    (ActionEvent e) -> {
+                        String username = NullSafe.safeString(funcPanel.getUsernameField().getText());
+                        String password = NullSafe.safeString(funcPanel.getPasswordField().getPassword());
+                        if (username.isEmpty() || password.isEmpty()) {
+                            DialogPopper.warning("账号或密码为空", "请检查确认账号密码是否都填写完整!");
+                        }
+                        userProxy.putAndSave("username", username);
+                        userProxy.putAndSave("password", password);
+                        DialogPopper.info("保存成功", "账号密码保存成功!");
+                    }
+            );
+        }
+    }
+
 }

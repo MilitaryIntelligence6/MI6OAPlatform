@@ -15,21 +15,21 @@ public final class DialogPopper {
         throw new UnsupportedOperationException(String.format("here are no %s instance for you", getClass().getName()));
     }
 
-    public static void unknownError() {
-        JOptionPane.showMessageDialog(
-                null,
-                "未知异常, 请联系开发者debug",
-                "Unknown ERROR",
-                JOptionPane.ERROR_MESSAGE
-        );
-    }
-
-    public static void error(String msg) {
+    public static void info(String msg) {
         JOptionPane.showMessageDialog(
                 null,
                 msg,
-                "ERROR",
-                JOptionPane.ERROR_MESSAGE
+                "Info",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    public static void info(String title, String msg) {
+        JOptionPane.showMessageDialog(
+                null,
+                msg,
+                title,
+                JOptionPane.INFORMATION_MESSAGE
         );
     }
 
@@ -38,6 +38,15 @@ public final class DialogPopper {
                 null,
                 msg,
                 "Question",
+                JOptionPane.QUESTION_MESSAGE
+        );
+    }
+
+    public static void question(String title, String msg) {
+        JOptionPane.showMessageDialog(
+                null,
+                msg,
+                title,
                 JOptionPane.QUESTION_MESSAGE
         );
     }
@@ -51,12 +60,21 @@ public final class DialogPopper {
         );
     }
 
-    public static int confirm(String msg) {
-        return JOptionPane.showConfirmDialog(
+    public static void warning(String title, String msg) {
+        JOptionPane.showMessageDialog(
                 null,
                 msg,
-                "确认",
-                JOptionPane.YES_NO_OPTION
+                title,
+                JOptionPane.WARNING_MESSAGE
+        );
+    }
+
+    public static void error(String msg) {
+        JOptionPane.showMessageDialog(
+                null,
+                msg,
+                "ERROR",
+                JOptionPane.ERROR_MESSAGE
         );
     }
 
@@ -69,21 +87,21 @@ public final class DialogPopper {
         );
     }
 
-    public static void question(String title, String msg) {
+    public static void unknownError() {
         JOptionPane.showMessageDialog(
                 null,
-                msg,
-                title,
-                JOptionPane.QUESTION_MESSAGE
+                "未知异常, 请联系开发者debug",
+                "Unknown ERROR",
+                JOptionPane.ERROR_MESSAGE
         );
     }
 
-    public static void warning(String title, String msg) {
-        JOptionPane.showMessageDialog(
+    public static int confirm(String msg) {
+        return JOptionPane.showConfirmDialog(
                 null,
                 msg,
-                title,
-                JOptionPane.WARNING_MESSAGE
+                "确认",
+                JOptionPane.YES_NO_OPTION
         );
     }
 

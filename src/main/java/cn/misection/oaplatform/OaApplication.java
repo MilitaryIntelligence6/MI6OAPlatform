@@ -1,6 +1,7 @@
 package cn.misection.oaplatform;
 
 import cn.misection.oaplatform.approval.controller.ApprovalController;
+import cn.misection.oaplatform.approval.ui.ApprovalFrame;
 import cn.misection.oaplatform.util.crackutil.CrackUtil;
 import cn.misection.oaplatform.util.uiutil.SkinManager;
 
@@ -18,6 +19,6 @@ public class OaApplication {
     }
 
     public static void main(String[] args) {
-        new ApprovalController();
+        new ApprovalController(new ApprovalFrame());
     }
 }
