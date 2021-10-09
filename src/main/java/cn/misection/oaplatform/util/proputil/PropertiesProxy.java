@@ -1,6 +1,7 @@
 package cn.misection.oaplatform.util.proputil;
 
 import cn.misection.oaplatform.config.ResourceBundle;
+import cn.misection.oaplatform.util.nullsafe.NullSafe;
 
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -59,5 +60,29 @@ public class PropertiesProxy {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public String getSafeString(String key) {
+        return NullSafe.safeString(properties.getProperty(key));
+    }
+
+    public byte getByte(String key) {
+        return Byte.parseByte(getSafeString(key));
+    }
+
+    public short getShort(String key) {
+        return Short.parseShort(getSafeString(key));
+    }
+
+    public int getInt(String key) {
+        return Integer.parseInt(getSafeString(key));
+    }
+
+    public long getLong(String key) {
+        return Long.parseLong(getSafeString(key));
+    }
+
+    public boolean getBoolean(String key) {
+        return Boolean.parseBoolean(getSafeString(key));
     }
 }

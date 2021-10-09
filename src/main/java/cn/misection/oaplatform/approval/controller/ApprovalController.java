@@ -24,15 +24,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class ApprovalController {
 
+    private static final PropertiesProxy configProxy = PropertiesProxy.instanceWithBundle(ResourceBundle.CONFIG);
+
     private final ApprovalFrame frame;
 
     private final FuncPanelController funcPanelController;
 
     private final ScheduledExecutorService singleThreadPool = Executors.newScheduledThreadPool(1);
 
-    private long interval = Long.parseLong(String.valueOf(
-            PropertiesProxy.instanceWithBundle(
-                    ResourceBundle.CONFIG).getProperty("interval")));
+    private long interval = configProxy.getLong("interval");
 
     public ApprovalController(ApprovalFrame frame) {
         this.frame = frame;
@@ -107,12 +107,7 @@ public class ApprovalController {
     }
 
     private void initState() {
-        boolean vpn = Boolean.parseBoolean(
-                String.valueOf(
-                        PropertiesProxy.instanceWithBundle(
-                                ResourceBundle.CONFIG)
-                                .getProperty("vpn")));
-        if (vpn) {
+        if (configProxy.getBoolean("vpn")) {
             frame.getBrowser()
                     .loadURL("https://webvpn.swufe.edu" +
                             ".cn/https/77726476706e69737468656265737421e1ef4bd22e237f45780dc7a596532c/QJ/FSJCheckQJLists");
@@ -144,11 +139,15 @@ public class ApprovalController {
         }
     }
 
+    public void setInterval(long interval) {
+        this.interval = interval;
+    }
+
     private static class FuncPanelController {
 
-        private final ApprovalFrame.FuncPanel funcPanel;
+        private static final PropertiesProxy userProxy = PropertiesProxy.instanceWithBundle(ResourceBundle.USER);
 
-        private final PropertiesProxy userProxy = PropertiesProxy.instanceWithBundle(ResourceBundle.USER);
+        private final ApprovalFrame.FuncPanel funcPanel;
 
         public FuncPanelController(ApprovalFrame.FuncPanel funcPanel) {
             this.funcPanel = funcPanel;
