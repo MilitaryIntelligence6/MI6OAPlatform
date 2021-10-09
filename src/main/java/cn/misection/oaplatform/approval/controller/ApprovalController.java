@@ -26,13 +26,15 @@ public class ApprovalController {
 
     private static final PropertiesProxy configProxy = PropertiesProxy.instanceWithBundle(ResourceBundle.CONFIG);
 
-    private final ApprovalFrame frame;
-
-    private final FuncPanelController funcPanelController;
+    private static final PropertiesProxy userProxy = PropertiesProxy.instanceWithBundle(ResourceBundle.USER);
 
     private final ScheduledExecutorService singleThreadPool = Executors.newScheduledThreadPool(1);
 
     private long interval = configProxy.getLong("interval");
+
+    private final ApprovalFrame frame;
+
+    private final FuncPanelController funcPanelController;
 
     public ApprovalController(ApprovalFrame frame) {
         this.frame = frame;
@@ -119,8 +121,8 @@ public class ApprovalController {
     private void autoLogin() {
         frame.getBrowser().executeJavaScript(String.format(
                 JsPool.AUTO_LOGIN.value(),
-                PropertiesProxy.instanceWithBundle(ResourceBundle.USER).getProperty("username"),
-                PropertiesProxy.instanceWithBundle(ResourceBundle.USER).getProperty("password")
+                userProxy.getSafeString("username"),
+                userProxy.getSafeString("password")
         ));
     }
 
@@ -145,8 +147,6 @@ public class ApprovalController {
 
     private static class FuncPanelController {
 
-        private static final PropertiesProxy userProxy = PropertiesProxy.instanceWithBundle(ResourceBundle.USER);
-
         private final ApprovalFrame.FuncPanel funcPanel;
 
         public FuncPanelController(ApprovalFrame.FuncPanel funcPanel) {
@@ -161,8 +161,8 @@ public class ApprovalController {
         }
 
         private void initState() {
-            funcPanel.getUsernameField().setText(NullSafe.safeString(userProxy.getProperty("username")));
-            funcPanel.getPasswordField().setText(NullSafe.safeString(userProxy.getProperty("password")));
+            funcPanel.getUsernameField().setText(userProxy.getSafeString("username"));
+            funcPanel.getPasswordField().setText(userProxy.getSafeString("password"));
         }
 
         private void initController() {

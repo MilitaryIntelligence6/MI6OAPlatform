@@ -16,10 +16,9 @@ import javax.swing.*;
  */
 public final class SkinManager {
 
-    private static final boolean beenDark = Boolean.parseBoolean(
-            String.valueOf(PropertiesProxy
+    private static final boolean beenDark = PropertiesProxy
                     .instanceWithBundle(ResourceBundle.CONFIG)
-                    .getProperty("dark")));
+                    .getBoolean("dark");
 
     private SkinManager() {
         throw new UnsupportedOperationException(String.format("here are no %s instance for you", getClass().getName()));

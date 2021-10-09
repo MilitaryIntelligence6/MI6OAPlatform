@@ -21,9 +21,9 @@ public class PropertiesProxy {
 
     private static final Map<ResourceBundle, PropertiesProxy> cache = new HashMap<>();
 
-    private final ResourceBundle bundle;
-
     private final Properties properties = new Properties();
+
+    private final ResourceBundle bundle;
 
     private PropertiesProxy(ResourceBundle bundle) {
         this.bundle = bundle;
