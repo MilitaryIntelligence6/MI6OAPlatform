@@ -14,7 +14,7 @@ import cn.misection.oaplatform.util.uiutil.SkinManager;
  */
 public class OaApplication {
     static {
-        CrackUtil.crackJxBrowser();
+        CrackUtil.crackJxBrowser621();
         SkinManager.setDarkSkin();
     }
 

@@ -85,9 +85,19 @@ public class ApprovalFrame extends JFrame {
 
         private final JPasswordField passwordField = new JPasswordField();
 
-        private final JButton clearButton = new JButton("清除");
+        private final JButton clearUserButton = new JButton("清除");
 
-        private final JButton savaButton = new JButton("保存");
+        private final JButton savaUserButton = new JButton("保存");
+
+        private final JTextField intervalField = new JTextField();
+
+        private final JButton saveIntervalButton = new JButton("保存并重置时间间隔");
+
+        private final JRadioButton fdyModButton = new JRadioButton("辅导员模式");
+
+        private final JRadioButton fsjModButton = new JRadioButton("副书记模式");
+
+        private final JButton reloadButton = new JButton("刷新页面");
 
         private final JPanel switchPanel = new JPanel() {
             {
@@ -146,8 +156,8 @@ public class ApprovalFrame extends JFrame {
                 final JPanel buttonPanel = new JPanel() {
                     {
                         setLayout(splitLayout);
-                        add(clearButton);
-                        add(savaButton);
+                        add(clearUserButton);
+                        add(savaUserButton);
                     }
                 };
 
@@ -157,12 +167,54 @@ public class ApprovalFrame extends JFrame {
             }
         };
 
+        private final JPanel controlPanel = new JPanel() {
+            {
+                setLayout(panelSplitLayout);
+                final JPanel internalPanel = new JPanel() {
+                    {
+                        setLayout(splitLayout);
+                        add(new JLabel("时间间隔(秒)"));
+                        add(intervalField);
+                    }
+                };
+                add(internalPanel);
+                add(saveIntervalButton);
+            }
+        };
+
+        private final JPanel roleSwitchPanel = new JPanel() {
+            {
+                setLayout(panelSplitLayout);
+                final JPanel rolePanel = new JPanel() {
+                    {
+                        setLayout(splitLayout);
+                        ButtonGroup buttonGroup = new ButtonGroup();
+                        buttonGroup.add(fdyModButton);
+                        buttonGroup.add(fsjModButton);
+                        add(fdyModButton);
+                        add(fsjModButton);
+                    }
+                };
+                add(rolePanel);
+            }
+        };
+
+        private final JPanel manualPanel = new JPanel() {
+            {
+                setLayout(panelSplitLayout);
+                add(reloadButton);
+            }
+        };
+
         public FuncPanel() {
             this.setLayout(new GridLayout(5, 1, 0, 20));
             this.setPreferredSize(new Dimension(200, 0));
 
             this.add(userPanel);
             this.add(switchPanel);
+            this.add(controlPanel);
+            this.add(roleSwitchPanel);
+            this.add(manualPanel);
         }
 
         public JTextField getUsernameField() {
@@ -173,12 +225,32 @@ public class ApprovalFrame extends JFrame {
             return passwordField;
         }
 
-        public JButton getClearButton() {
-            return clearButton;
+        public JButton getClearUserButton() {
+            return clearUserButton;
         }
 
-        public JButton getSavaButton() {
-            return savaButton;
+        public JButton getSavaUserButton() {
+            return savaUserButton;
+        }
+
+        public JTextField getIntervalField() {
+            return intervalField;
+        }
+
+        public JButton getSaveIntervalButton() {
+            return saveIntervalButton;
+        }
+
+        public JRadioButton getFdyModButton() {
+            return fdyModButton;
+        }
+
+        public JRadioButton getFsjModButton() {
+            return fsjModButton;
+        }
+
+        public JButton getReloadButton() {
+            return reloadButton;
         }
     }
 }

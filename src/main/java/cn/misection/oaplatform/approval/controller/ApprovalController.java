@@ -1,16 +1,27 @@
 package cn.misection.oaplatform.approval.controller;
 
+import cn.hutool.core.util.StrUtil;
 import cn.misection.oaplatform.approval.ui.ApprovalFrame;
 import cn.misection.oaplatform.common.constant.JsPool;
+import cn.misection.oaplatform.common.constant.RoleMode;
 import cn.misection.oaplatform.config.BuildConfig;
 import cn.misection.oaplatform.config.ResourceBundle;
 import cn.misection.oaplatform.util.nullsafe.NullSafe;
 import cn.misection.oaplatform.util.proputil.PropertiesProxy;
 import cn.misection.oaplatform.util.uiutil.DialogPopper;
+import cn.misection.oaplatform.util.urlutil.ApprovalUrlUtil;
+import com.teamdev.jxbrowser.chromium.*;
+import com.teamdev.jxbrowser.chromium.dom.By;
+import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
+import com.teamdev.jxbrowser.chromium.dom.DOMElement;
+import com.teamdev.jxbrowser.chromium.dom.DOMNode;
 import com.teamdev.jxbrowser.chromium.events.*;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -36,21 +47,39 @@ public class ApprovalController {
 
     private final FuncPanelController funcPanelController;
 
+    private String url;
+
     public ApprovalController(ApprovalFrame frame) {
         this.frame = frame;
-        this.funcPanelController = new FuncPanelController(frame.getFuncPanel());
+        this.funcPanelController = new FuncPanelController(this);
         init();
     }
 
     private void init() {
         initController();
-        initActionListener();
         initCallback();
         initState();
+        initActionListener();
     }
 
     private void initController() {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+    }
+
+    private void initCallback() {
+
+    }
+
+    private void initState() {
+        if (BuildConfig.DEBUG) {
+            System.out.println("String.format(ApprovalUrlUtil.fetch(configProxy.getBoolean(\"vpn\")), \"FDYSTUList\")" +
+                    "); = "
+                    + ApprovalUrlUtil.fetch(configProxy.getBoolean("vpn")) + "FDYSTUList");
+        }
+        setUrlAndReload(
+                ApprovalUrlUtil.fetch(configProxy.getBoolean("vpn")) +
+                        "FDYSTUList"
+        );
     }
 
     private void initActionListener() {
@@ -72,17 +101,53 @@ public class ApprovalController {
                     @Override
                     public void onFinishLoadingFrame(FinishLoadingEvent event) {
                         super.onFinishLoadingFrame(event);
-                        if (BuildConfig.DEBUG) {
-                            System.out.printf("event.getValidatedURL() = %s%n", event.getValidatedURL());
-                        }
-                        if (event.getValidatedURL().contains("authserver")) {
-                            if (++enterLoginPageTime <= 3) {
-                                autoLogin();
-                            } else {
-                                DialogPopper.error("由于三次尝试帮您自动登录失败, 可能是账户密码输入错误的原因, 请检查左边板块的账号秘钥重新登录");
+                        if (event.isMainFrame()) {
+                            if (BuildConfig.DEBUG) {
+                                System.out.printf("event.getValidatedURL() = %s%n", event.getValidatedURL());
                             }
-                        } else if (event.getValidatedURL().contains("FSJCheckQJLists")) {
-                            autoApprovalLoopAtFixedRate();
+                            if (event.getValidatedURL().contains(";")
+                                    || event.getValidatedURL().contains("jsessionid")
+                                    || event.getBrowser().getDocument().getDocumentElement().getInnerHTML().contains(
+                                            "访问出错")) {
+                                reload();
+                            } else if (event.getValidatedURL().contains("authserver")) {
+                                if (++enterLoginPageTime <= 3) {
+                                    autoLogin();
+                                } else {
+                                    DialogPopper.error("由于三次尝试帮您自动登录失败, 可能是账户密码输入错误的原因, 请检查左边板块的账号秘钥重新登录");
+                                }
+                            } else if (event.getValidatedURL().contains("FSJCheckQJLists") || event.getValidatedURL().contains("FDYSTUList")) {
+                                autoApprovalLoopAtFixedRate();
+                                if (BuildConfig.DEBUG) {
+                                    DOMDocument document = event.getBrowser().getDocument();
+                                    List<DOMElement> buttonList = document.findElements(By.className("btn btn-success"));
+                                    List<DOMElement> tdList = document.findElements(By.tagName("td"));
+                                    List<DOMElement> passButtonList = new ArrayList<>();
+                                    List<DOMElement> durationList = new ArrayList<>();
+                                    for (DOMElement button : buttonList) {
+                                        if ("请假通过".equals(button.getAttribute("value"))) {
+                                            passButtonList.add(button);
+                                        }
+                                    }
+                                    for (DOMElement td : tdList) {
+                                        if (td.getInnerHTML().contains("成都市范围")) {
+                                            durationList.add(td);
+                                        }
+                                    }
+                                    passButtonList.forEach(
+                                            ele -> {
+                                                System.out.println("ele.getAttribute(\"value\") = " + ele.getAttribute("value"));
+                                            }
+                                    );
+                                    durationList.forEach(
+                                            ele -> {
+                                                System.out.println("ele.getInnerHTML() = " + ele.getInnerHTML());
+                                            }
+                                    );
+                                    System.out.println("passButtonList.size() = " + passButtonList.size());
+                                    System.out.println("durationList.size() = " + durationList.size());
+                                }
+                            }
                         }
                     }
 
@@ -102,20 +167,75 @@ public class ApprovalController {
                     }
                 }
         );
-    }
 
-    private void initCallback() {
+        frame.getBrowser().setDialogHandler(
+                new DialogHandler() {
+                    @Override
+                    public void onAlert(DialogParams dialogParams) {
+                        if (BuildConfig.DEBUG) {
+                            System.out.println("ApprovalController::onAlert");
+                        }
+                        System.out.println("dialogParams = " + dialogParams);
+                    }
 
-    }
+                    @Override
+                    public CloseStatus onConfirmation(DialogParams dialogParams) {
+                        if (BuildConfig.DEBUG) {
+                            System.out.println("ApprovalController::onConfirmation");
+                        }
+                        System.out.println("dialogParams = " + dialogParams);
+                        return CloseStatus.OK;
+                    }
 
-    private void initState() {
-        if (configProxy.getBoolean("vpn")) {
-            frame.getBrowser()
-                    .loadURL("https://webvpn.swufe.edu" +
-                            ".cn/https/77726476706e69737468656265737421e1ef4bd22e237f45780dc7a596532c/QJ/FSJCheckQJLists");
-        } else {
-            frame.getBrowser().loadURL("https://qxj.iswufe.info/QJ/FSJCheckQJLists");
-        }
+                    @Override
+                    public CloseStatus onPrompt(PromptDialogParams promptDialogParams) {
+                        if (BuildConfig.DEBUG) {
+                            System.out.println("ApprovalController::onPrompt");
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public CloseStatus onFileChooser(FileChooserParams fileChooserParams) {
+                        if (BuildConfig.DEBUG) {
+                            System.out.println("ApprovalController::onFileChooser");
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public CloseStatus onBeforeUnload(UnloadDialogParams unloadDialogParams) {
+                        if (BuildConfig.DEBUG) {
+                            System.out.println("ApprovalController::onBeforeUnload");
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public CloseStatus onSelectCertificate(CertificatesDialogParams certificatesDialogParams) {
+                        if (BuildConfig.DEBUG) {
+                            System.out.println("ApprovalController::onSelectCertificate");
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public CloseStatus onReloadPostData(ReloadPostDataParams reloadPostDataParams) {
+                        if (BuildConfig.DEBUG) {
+                            System.out.println("ApprovalController::onReloadPostData");
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public CloseStatus onColorChooser(ColorChooserParams colorChooserParams) {
+                        if (BuildConfig.DEBUG) {
+                            System.out.println("ApprovalController::onColorChooser");
+                        }
+                        return null;
+                    }
+                }
+        );
     }
 
     private void autoLogin() {
@@ -137,20 +257,48 @@ public class ApprovalController {
 
     private void autoApprovalSingleTask() {
         if (BuildConfig.DEBUG) {
-            System.out.println("loop unit");
+            System.out.println("TODO: loop unit");
         }
+    }
+
+    private void reload() {
+        frame.getBrowser().loadURL(url);
+    }
+
+    private void setUrlAndReload(String url) {
+        if (BuildConfig.DEBUG) {
+            System.out.println("url = " + url);
+        }
+        this.url = url;
+        reload();
     }
 
     public void setInterval(long interval) {
         this.interval = interval;
     }
 
+    public ApprovalFrame getFrame() {
+        return frame;
+    }
+
+    public long getInterval() {
+        return interval;
+    }
+
+    /**
+     * ##class FuncPanelController
+     */
     private static class FuncPanelController {
+
+        private final ApprovalController context;
 
         private final ApprovalFrame.FuncPanel funcPanel;
 
-        public FuncPanelController(ApprovalFrame.FuncPanel funcPanel) {
-            this.funcPanel = funcPanel;
+        private RoleMode roleMode;
+
+        public FuncPanelController(ApprovalController context) {
+            this.context = context;
+            this.funcPanel = context.getFrame().getFuncPanel();
             init();
         }
 
@@ -161,8 +309,12 @@ public class ApprovalController {
         }
 
         private void initState() {
+            this.roleMode = RoleMode.requireOrDefaultByLiteral(configProxy.getSafeString("role"));
+            funcPanel.getIntervalField().setText(String.valueOf(context.getInterval()));
             funcPanel.getUsernameField().setText(userProxy.getSafeString("username"));
             funcPanel.getPasswordField().setText(userProxy.getSafeString("password"));
+            funcPanel.getFsjModButton().setSelected(roleMode == RoleMode.FSJ);
+            funcPanel.getFdyModButton().setSelected(roleMode == RoleMode.FDY);
         }
 
         private void initController() {
@@ -170,17 +322,19 @@ public class ApprovalController {
         }
 
         private void initActionListener() {
-            funcPanel.getClearButton().addActionListener(
+            funcPanel.getClearUserButton().addActionListener(
                     (ActionEvent e) -> {
                         funcPanel.getPasswordField().setText("");
                         funcPanel.getUsernameField().setText("");
                     }
             );
 
-            funcPanel.getSavaButton().addActionListener(
+            funcPanel.getSavaUserButton().addActionListener(
                     (ActionEvent e) -> {
-                        String username = NullSafe.safeString(funcPanel.getUsernameField().getText());
-                        String password = NullSafe.safeString(funcPanel.getPasswordField().getPassword());
+                        String username =
+                                NullSafe.safeString(funcPanel.getUsernameField().getText());
+                        String password =
+                                NullSafe.safeString(funcPanel.getPasswordField().getPassword());
                         if (username.isEmpty() || password.isEmpty()) {
                             DialogPopper.warning("账号或密码为空", "请检查确认账号密码是否都填写完整!");
                         }
@@ -189,7 +343,39 @@ public class ApprovalController {
                         DialogPopper.info("保存成功", "账号密码保存成功!");
                     }
             );
+
+            funcPanel.getSaveIntervalButton().addActionListener(
+                    (ActionEvent e) -> {
+                        String intervalString =
+                                NullSafe.safeString(funcPanel.getIntervalField().getText());
+                        if (!StrUtil.isNumeric(intervalString)) {
+                            DialogPopper.error("数字格式错误", "请在间隔时间框输入正确的数字");
+                            return;
+                        }
+                        configProxy.putAndSave("interval", intervalString);
+                        DialogPopper.info("保存成功", "时间间隔保存成功, 将在重启后生效");
+                    }
+            );
+
+            funcPanel.getFdyModButton().addChangeListener(
+                    e -> {
+                        roleMode = funcPanel.getFdyModButton().isSelected()
+                                ? RoleMode.FDY
+                                : RoleMode.FSJ;
+                        configProxy.putAndSave("role", roleMode.name().toLowerCase(Locale.ROOT));
+                        context.setUrlAndReload(
+                                ApprovalUrlUtil.fetch(configProxy.getBoolean("vpn"), roleMode));
+                    }
+            );
+
+            funcPanel.getReloadButton().addActionListener(
+                    e -> context.setUrlAndReload(ApprovalUrlUtil.fetch(configProxy.getBoolean("vpn"), roleMode))
+            );
+        }
+
+        private void setRoleAndSwitch(RoleMode roleMode) {
+            this.roleMode = roleMode;
+            context.setUrlAndReload(ApprovalUrlUtil.fetch(configProxy.getBoolean("vpn"), roleMode));
         }
     }
-
 }

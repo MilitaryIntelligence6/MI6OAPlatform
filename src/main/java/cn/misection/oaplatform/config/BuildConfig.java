@@ -7,7 +7,7 @@ package cn.misection.oaplatform.config;
  * @Description TODO
  * @CreateTime 2021年06月13日 21:31:00
  */
-public class BuildConfig {
+public final class BuildConfig {
 
     private BuildConfig() {
         throw new RuntimeException("here are no BuildConfig instance for you!");

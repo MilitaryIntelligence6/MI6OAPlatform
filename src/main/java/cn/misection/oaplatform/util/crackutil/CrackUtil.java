@@ -19,7 +19,7 @@ public final class CrackUtil {
         throw new UnsupportedOperationException(String.format("here are no %s instance for you", getClass().getName()));
     }
 
-    public static void crackJxBrowser() {
+    public static void crackJxBrowser621() {
         try {
             Field e = ba.class.getDeclaredField("e");
             e.setAccessible(true);
