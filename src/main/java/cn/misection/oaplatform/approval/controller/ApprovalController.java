@@ -429,7 +429,7 @@ public class ApprovalController {
                         @Override
                         public void mouseClicked(MouseEvent e) {
                             super.mouseClicked(e);
-                            configProxy.putAndSave("");
+//                            configProxy.putAndSave("");
                             if (BuildConfig.DEBUG) {
                                 System.out.println("onClicked my toggle");
                             }
