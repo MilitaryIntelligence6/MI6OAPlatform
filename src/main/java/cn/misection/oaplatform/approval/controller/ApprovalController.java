@@ -1,6 +1,7 @@
 package cn.misection.oaplatform.approval.controller;
 
 import cn.hutool.core.util.StrUtil;
+import cn.misection.oaplatform.approval.entity.SingleAskForLeave;
 import cn.misection.oaplatform.approval.ui.ApprovalFrame;
 import cn.misection.oaplatform.common.constant.JsPool;
 import cn.misection.oaplatform.common.constant.RoleMode;
@@ -14,7 +15,6 @@ import com.teamdev.jxbrowser.chromium.*;
 import com.teamdev.jxbrowser.chromium.dom.By;
 import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
 import com.teamdev.jxbrowser.chromium.dom.DOMElement;
-import com.teamdev.jxbrowser.chromium.dom.DOMNode;
 import com.teamdev.jxbrowser.chromium.events.*;
 
 import javax.swing.*;
@@ -108,7 +108,7 @@ public class ApprovalController {
                             if (event.getValidatedURL().contains(";")
                                     || event.getValidatedURL().contains("jsessionid")
                                     || event.getBrowser().getDocument().getDocumentElement().getInnerHTML().contains(
-                                            "访问出错")) {
+                                    "访问出错")) {
                                 reload();
                             } else if (event.getValidatedURL().contains("authserver")) {
                                 if (++enterLoginPageTime <= 3) {
@@ -118,35 +118,6 @@ public class ApprovalController {
                                 }
                             } else if (event.getValidatedURL().contains("FSJCheckQJLists") || event.getValidatedURL().contains("FDYSTUList")) {
                                 autoApprovalLoopAtFixedRate();
-                                if (BuildConfig.DEBUG) {
-                                    DOMDocument document = event.getBrowser().getDocument();
-                                    List<DOMElement> buttonList = document.findElements(By.className("btn btn-success"));
-                                    List<DOMElement> tdList = document.findElements(By.tagName("td"));
-                                    List<DOMElement> passButtonList = new ArrayList<>();
-                                    List<DOMElement> durationList = new ArrayList<>();
-                                    for (DOMElement button : buttonList) {
-                                        if ("请假通过".equals(button.getAttribute("value"))) {
-                                            passButtonList.add(button);
-                                        }
-                                    }
-                                    for (DOMElement td : tdList) {
-                                        if (td.getInnerHTML().contains("成都市范围")) {
-                                            durationList.add(td);
-                                        }
-                                    }
-                                    passButtonList.forEach(
-                                            ele -> {
-                                                System.out.println("ele.getAttribute(\"value\") = " + ele.getAttribute("value"));
-                                            }
-                                    );
-                                    durationList.forEach(
-                                            ele -> {
-                                                System.out.println("ele.getInnerHTML() = " + ele.getInnerHTML());
-                                            }
-                                    );
-                                    System.out.println("passButtonList.size() = " + passButtonList.size());
-                                    System.out.println("durationList.size() = " + durationList.size());
-                                }
                             }
                         }
                     }
@@ -249,16 +220,70 @@ public class ApprovalController {
     private void autoApprovalLoopAtFixedRate() {
         singleThreadPool.scheduleAtFixedRate(
                 this::autoApprovalSingleTask,
-                1,
+                interval,
                 interval,
                 TimeUnit.SECONDS
         );
     }
 
     private void autoApprovalSingleTask() {
-        if (BuildConfig.DEBUG) {
-            System.out.println("TODO: loop unit");
+        DOMDocument document = frame.getBrowser().getDocument();
+        DOMElement dataTablesEmpty = document.findElement(By.className("dataTables_empty"));
+        DOMElement tbfDs = document.findElement(By.id("tbf_ds"));
+        boolean caEvalScript = true;
+        // empty 不存在(书记页)
+        caEvalScript = caEvalScript && (dataTablesEmpty == null);
+        // tbfds 不是暂无数据;
+        if (tbfDs != null) {
+            caEvalScript = caEvalScript && !(tbfDs.getInnerHTML().contains("暂无数据"));
         }
+        if (caEvalScript) {
+            List<DOMElement> buttonList = document.findElements(By.className("btn btn-success"));
+            List<DOMElement> tdList = document.findElements(By.tagName("td"));
+            List<DOMElement> passButtonList = new ArrayList<>();
+            List<DOMElement> durationList = new ArrayList<>();
+            for (DOMElement button : buttonList) {
+                if ("请假通过".equals(button.getAttribute("value"))) {
+                    passButtonList.add(button);
+                }
+            }
+            for (DOMElement td : tdList) {
+                if (td.getInnerHTML().contains("成都市范围")) {
+                    durationList.add(td);
+                }
+            }
+            if (passButtonList.size() != durationList.size()) {
+                DialogPopper.error("出现了兼容性异常!请联系开发者解决");
+                return;
+            }
+            List<SingleAskForLeave> singleList = new ArrayList<>();
+            for (int i = 0, size = durationList.size(); i < size; i++) {
+                singleList.add(new SingleAskForLeave(
+                        durationList.get(i).getInnerHTML(),
+                        passButtonList.get(i)));
+            }
+            for (SingleAskForLeave singleAskForLeave : singleList) {
+                if (singleAskForLeave.canAutoPass()) {
+                    singleAskForLeave.pass();
+                }
+            }
+            if (BuildConfig.DEBUG) {
+                System.out.println("TODO: loop unit");
+                passButtonList.forEach(
+                        ele -> {
+                            System.out.println("ele.getAttribute(\"value\") = " + ele.getAttribute("value"));
+                        }
+                );
+                durationList.forEach(
+                        ele -> {
+                            System.out.println("ele.getInnerHTML() = " + ele.getInnerHTML());
+                        }
+                );
+                System.out.println("passButtonList.size() = " + passButtonList.size());
+                System.out.println("durationList.size() = " + durationList.size());
+            }
+        }
+        reload();
     }
 
     private void reload() {

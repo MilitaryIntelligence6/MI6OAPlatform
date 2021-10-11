@@ -21,12 +21,12 @@ public class SingleAskForLeave {
         this.passButton = passButton;
     }
 
-    public boolean shouldAutoPass() {
+    public boolean canAutoPass() {
         return StrUtil.isNotBlank(type)
                 && !(type.contains("十天以上"));// || type.contains("成都市范围外"));
     }
 
-    public void click() {
+    public void pass() {
         passButton.click();
     }
 
