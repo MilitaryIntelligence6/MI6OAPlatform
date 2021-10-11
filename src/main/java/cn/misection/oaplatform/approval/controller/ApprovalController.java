@@ -2,6 +2,7 @@ package cn.misection.oaplatform.approval.controller;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.log.Log;
 import cn.misection.oaplatform.approval.entity.SingleAskForLeave;
 import cn.misection.oaplatform.approval.ui.ApprovalFrame;
 import cn.misection.oaplatform.common.constant.JsPool;
@@ -38,6 +39,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class ApprovalController {
 
+    private static final Log logger = Log.get();
+
     private static final PropertiesProxy configProxy = PropertiesProxy.instanceWithBundle(ResourceBundle.CONFIG);
 
     private static final PropertiesProxy userProxy = PropertiesProxy.instanceWithBundle(ResourceBundle.USER);
@@ -64,17 +67,13 @@ public class ApprovalController {
 
     private void init() {
         initController();
-        initCallback();
         initState();
         initActionListener();
+        initApprovalLooper();
     }
 
     private void initController() {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-    }
-
-    private void initCallback() {
-
     }
 
     private void initState() {
@@ -103,7 +102,7 @@ public class ApprovalController {
                         super.onFinishLoadingFrame(event);
                         if (event.isMainFrame()) {
                             if (BuildConfig.DEBUG) {
-                                System.out.printf("event.getValidatedURL() = %s%n", event.getValidatedURL());
+                                logger.debug("event.getValidatedURL() = %s%n", event.getValidatedURL());
                             }
                             boolean needReload = false;
                             DOMDocument document = event.getBrowser().getDocument();
@@ -123,7 +122,7 @@ public class ApprovalController {
                                     DialogPopper.error("由于三次尝试帮您自动登录失败, 可能是账户密码输入错误的原因, 请检查左边板块的账号秘钥重新登录");
                                 }
                             } else if (event.getValidatedURL().contains("FSJCheckQJLists") || event.getValidatedURL().contains("FDYSTUList")) {
-                                autoApprovalLoopAtFixedRate();
+                                autoApprovalSingleTask();
                             }
                         }
                     }
@@ -150,24 +149,24 @@ public class ApprovalController {
                     @Override
                     public void onAlert(DialogParams dialogParams) {
                         if (BuildConfig.DEBUG) {
-                            System.out.println("ApprovalController::onAlert");
+                            logger.debug("ApprovalController::onAlert");
                         }
-                        System.out.println("dialogParams = " + dialogParams);
+                        logger.debug("dialogParams = " + dialogParams);
                     }
 
                     @Override
                     public CloseStatus onConfirmation(DialogParams dialogParams) {
                         if (BuildConfig.DEBUG) {
-                            System.out.println("ApprovalController::onConfirmation");
+                            logger.debug("ApprovalController::onConfirmation");
                         }
-                        System.out.println("dialogParams = " + dialogParams);
+                        logger.debug("dialogParams = " + dialogParams);
                         return CloseStatus.OK;
                     }
 
                     @Override
                     public CloseStatus onPrompt(PromptDialogParams promptDialogParams) {
                         if (BuildConfig.DEBUG) {
-                            System.out.println("ApprovalController::onPrompt");
+                            logger.debug("ApprovalController::onPrompt");
                         }
                         return null;
                     }
@@ -175,7 +174,7 @@ public class ApprovalController {
                     @Override
                     public CloseStatus onFileChooser(FileChooserParams fileChooserParams) {
                         if (BuildConfig.DEBUG) {
-                            System.out.println("ApprovalController::onFileChooser");
+                            logger.debug("ApprovalController::onFileChooser");
                         }
                         return null;
                     }
@@ -183,7 +182,7 @@ public class ApprovalController {
                     @Override
                     public CloseStatus onBeforeUnload(UnloadDialogParams unloadDialogParams) {
                         if (BuildConfig.DEBUG) {
-                            System.out.println("ApprovalController::onBeforeUnload");
+                            logger.debug("ApprovalController::onBeforeUnload");
                         }
                         return null;
                     }
@@ -191,7 +190,7 @@ public class ApprovalController {
                     @Override
                     public CloseStatus onSelectCertificate(CertificatesDialogParams certificatesDialogParams) {
                         if (BuildConfig.DEBUG) {
-                            System.out.println("ApprovalController::onSelectCertificate");
+                            logger.debug("ApprovalController::onSelectCertificate");
                         }
                         return null;
                     }
@@ -199,7 +198,7 @@ public class ApprovalController {
                     @Override
                     public CloseStatus onReloadPostData(ReloadPostDataParams reloadPostDataParams) {
                         if (BuildConfig.DEBUG) {
-                            System.out.println("ApprovalController::onReloadPostData");
+                            logger.debug("ApprovalController::onReloadPostData");
                         }
                         return null;
                     }
@@ -207,7 +206,7 @@ public class ApprovalController {
                     @Override
                     public CloseStatus onColorChooser(ColorChooserParams colorChooserParams) {
                         if (BuildConfig.DEBUG) {
-                            System.out.println("ApprovalController::onColorChooser");
+                            logger.debug("ApprovalController::onColorChooser");
                         }
                         return null;
                     }
@@ -224,10 +223,10 @@ public class ApprovalController {
         ));
     }
 
-    private void autoApprovalLoopAtFixedRate() {
+    private void initApprovalLooper() {
         singleThreadPool.scheduleAtFixedRate(
-                this::autoApprovalSingleTask,
-                interval,
+                this::reload,
+                1,
                 interval,
                 TimeUnit.SECONDS
         );
@@ -279,22 +278,21 @@ public class ApprovalController {
                 }
             }
             if (BuildConfig.DEBUG) {
-                System.out.println("TODO: loop unit");
+                logger.debug("TODO: loop unit");
                 passButtonList.forEach(
                         ele -> {
-                            System.out.println("ele.getAttribute(\"value\") = " + ele.getAttribute("value"));
+                            logger.debug("ele.getAttribute(\"value\") = " + ele.getAttribute("value"));
                         }
                 );
                 durationList.forEach(
                         ele -> {
-                            System.out.println("ele.getInnerHTML() = " + ele.getInnerHTML());
+                            logger.debug("ele.getInnerHTML() = " + ele.getInnerHTML());
                         }
                 );
-                System.out.println("passButtonList.size() = " + passButtonList.size());
-                System.out.println("durationList.size() = " + durationList.size());
+                logger.debug("passButtonList.size() = " + passButtonList.size());
+                logger.debug("durationList.size() = " + durationList.size());
             }
         }
-        reload();
     }
 
     private void reload() {
@@ -312,19 +310,14 @@ public class ApprovalController {
         );
     }
 
-    private void setUrlAndReload(String url) {
-        this.url = url;
-        reload();
-    }
-
-    public void setRoleModeAndReload(RoleMode roleMode) {
+    public void saveRoleModeAndReload(RoleMode roleMode) {
         this.roleMode = roleMode;
         configProxy.putAndSave("role", roleMode.name().toLowerCase(Locale.ROOT));
         reGenUrl();
         reload();
     }
 
-    public void setVpnAndReload(boolean vpn) {
+    public void saveVpnAndReload(boolean vpn) {
         this.vpn = vpn;
         configProxy.putAndSave("vpn", String.valueOf(vpn));
         reGenUrl();
@@ -373,14 +366,13 @@ public class ApprovalController {
         }
 
         private void initState() {
-            if (BuildConfig.DEBUG) {
-                System.out.println("roleMode.name() = " + context.getRoleMode().name());
-            }
             funcPanel.getIntervalField().setText(String.valueOf(context.getInterval()));
             funcPanel.getUsernameField().setText(userProxy.getSafeString("username"));
             funcPanel.getPasswordField().setText(userProxy.getSafeString("password"));
             funcPanel.getFsjModButton().setSelected(context.getRoleMode() == RoleMode.FSJ);
             funcPanel.getFdyModButton().setSelected(context.getRoleMode() == RoleMode.FDY);
+            funcPanel.getVpnModeSwitch().setSelectedAndRepaint(configProxy.getBoolean("vpn"));
+            funcPanel.getDarkModSwitch().setSelectedAndRepaint(configProxy.getBoolean("dark"));
         }
 
         private void initController() {
@@ -429,19 +421,31 @@ public class ApprovalController {
                         @Override
                         public void mouseClicked(MouseEvent e) {
                             super.mouseClicked(e);
-//                            configProxy.putAndSave("");
+                            context.saveVpnAndReload(!configProxy.getBoolean("vpn"));
                             if (BuildConfig.DEBUG) {
-                                System.out.println("onClicked my toggle");
+                                logger.debug("onClicked vpn");
                             }
                         }
                     }
             );
 
-//            funcPanel.getDarkModToggleButton()
+            funcPanel.getDarkModSwitch().addMouseListener(
+                    new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            super.mouseClicked(e);
+                            configProxy.putAndSave("dark", String.valueOf(!configProxy.getBoolean("dark")));
+                            DialogPopper.info("切换皮肤成功, 将在重启后生效");
+                            if (BuildConfig.DEBUG) {
+                                logger.debug("onClicked dark");
+                            }
+                        }
+                    }
+            );
 
             funcPanel.getFdyModButton().addChangeListener(
                     e -> {
-                        context.setRoleModeAndReload(
+                        context.saveRoleModeAndReload(
                                 funcPanel.getFdyModButton().isSelected()
                                         ? RoleMode.FDY
                                         : RoleMode.FSJ
@@ -450,7 +454,8 @@ public class ApprovalController {
             );
 
             funcPanel.getReloadButton().addActionListener(
-                    e -> context.reload());
+                    e -> context.reload()
+            );
         }
     }
 }

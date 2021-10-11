@@ -1,16 +1,12 @@
 package cn.misection.oaplatform.approval.ui;
 
-import cn.misection.oaplatform.common.ui.component.DarkModToggleButton;
 import cn.misection.oaplatform.common.ui.component.MyToggleButton;
-import cn.misection.oaplatform.config.BuildConfig;
 import cn.misection.oaplatform.util.uiutil.CenterUtil;
 import com.teamdev.jxbrowser.chromium.Browser;
 import com.teamdev.jxbrowser.chromium.swing.BrowserView;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 /**
  * @author Military Intelligence 6 root
@@ -34,6 +30,7 @@ public class ApprovalFrame extends JFrame {
     }
 
     private void initView() {
+        setTitle("欢迎您使用 MI6 自动化请假管理办公系统");
         measureView();
         layoutView();
         drawView();
@@ -105,9 +102,18 @@ public class ApprovalFrame extends JFrame {
             }
         };
 
-        private final DarkModToggleButton darkModToggleButton = new DarkModToggleButton() {
+        private final MyToggleButton darkModSwitch = new MyToggleButton() {
             {
                 setPreferredSize(switchDimen);
+            }
+        };
+
+        private final JPanel titlePanel = new JPanel() {
+            {
+                setLayout(splitLayout);
+                add(new JPanel());
+                add(new JLabel("控制面板"));
+                add(new JLabel("MI6 控制台"));
             }
         };
 
@@ -126,11 +132,22 @@ public class ApprovalFrame extends JFrame {
                     {
                         setLayout(splitLayout);
                         add(new JLabel("夜间模式"));
-                        add(darkModToggleButton);
+                        add(darkModSwitch);
+                    }
+                };
+                final JPanel rolePanel = new JPanel() {
+                    {
+                        setLayout(splitLayout);
+                        ButtonGroup buttonGroup = new ButtonGroup();
+                        buttonGroup.add(fdyModButton);
+                        buttonGroup.add(fsjModButton);
+                        add(fdyModButton);
+                        add(fsjModButton);
                     }
                 };
                 add(vpnPanel);
                 add(darkModPanel);
+                add(rolePanel);
             }
         };
 
@@ -179,42 +196,18 @@ public class ApprovalFrame extends JFrame {
                 };
                 add(internalPanel);
                 add(saveIntervalButton);
-            }
-        };
-
-        private final JPanel roleSwitchPanel = new JPanel() {
-            {
-                setLayout(panelSplitLayout);
-                final JPanel rolePanel = new JPanel() {
-                    {
-                        setLayout(splitLayout);
-                        ButtonGroup buttonGroup = new ButtonGroup();
-                        buttonGroup.add(fdyModButton);
-                        buttonGroup.add(fsjModButton);
-                        add(fdyModButton);
-                        add(fsjModButton);
-                    }
-                };
-                add(rolePanel);
-            }
-        };
-
-        private final JPanel manualPanel = new JPanel() {
-            {
-                setLayout(panelSplitLayout);
                 add(reloadButton);
             }
         };
 
         public FuncPanel() {
-            this.setLayout(new GridLayout(5, 1, 0, 20));
+            this.setLayout(new GridLayout(5, 1, 10, 20));
             this.setPreferredSize(new Dimension(200, 0));
 
+            this.add(titlePanel);
             this.add(userPanel);
             this.add(switchPanel);
             this.add(controlPanel);
-            this.add(roleSwitchPanel);
-            this.add(manualPanel);
         }
 
         public JTextField getUsernameField() {
@@ -257,8 +250,8 @@ public class ApprovalFrame extends JFrame {
             return vpnModeSwitch;
         }
 
-        public DarkModToggleButton getDarkModToggleButton() {
-            return darkModToggleButton;
+        public MyToggleButton getDarkModSwitch() {
+            return darkModSwitch;
         }
     }
 }

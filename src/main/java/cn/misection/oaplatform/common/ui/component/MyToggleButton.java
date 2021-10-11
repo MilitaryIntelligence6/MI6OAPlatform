@@ -47,23 +47,18 @@ public class MyToggleButton extends JPanel {
     /**
      * 监听属性;
      */
-    private StateListener stateListener = new StateListener() {
-        @Override
-        public void stateChanged(Object source) {
-            toggle();
-        }
-    };
+    private StateListener stateListener;// = source -> toggle();
 
     public MyToggleButton() {
         this.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 super.mousePressed(e);
-                if (stateListener != null) {
-                    stateListener.stateChanged(this);
-                }
+//                if (stateListener != null) {
+//                    stateListener.stateChanged(this);
+//                }
                 // FIXME: 2021/10/8 对比;
-//                toggle();
+                toggle();
             }
         });
     }
