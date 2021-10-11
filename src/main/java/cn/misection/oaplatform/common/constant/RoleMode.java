@@ -1,6 +1,7 @@
 package cn.misection.oaplatform.common.constant;
 
 import cn.hutool.core.util.StrUtil;
+import cn.misection.oaplatform.config.BuildConfig;
 
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import java.util.Map;
 public enum RoleMode {
 
     /**
+     * @important! 不要修改名字!, name() 会用到!;
      * 辅导员模式;
      */
     FDY("FDYSTUList"),
@@ -41,12 +43,12 @@ public enum RoleMode {
 
     static {
         for (RoleMode roleMode : EnumSet.allOf(RoleMode.class)) {
-            lookup.put(roleMode.getSuffix().toLowerCase(Locale.ROOT), roleMode);
+            lookup.put(roleMode.name().toLowerCase(Locale.ROOT).trim(), roleMode);
         }
     }
 
     public static RoleMode requireOrDefaultByLiteral(String key) {
-        RoleMode roleMode = lookup.get(StrUtil.nullToEmpty(key).toLowerCase(Locale.ROOT));
+        RoleMode roleMode = lookup.get(StrUtil.nullToEmpty(key).toLowerCase(Locale.ROOT).trim());
         return roleMode == null
                 ? RoleMode.FSJ
                 : roleMode;

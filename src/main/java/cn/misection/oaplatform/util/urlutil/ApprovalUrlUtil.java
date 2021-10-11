@@ -11,11 +11,11 @@ import cn.misection.oaplatform.common.constant.RoleMode;
  */
 public class ApprovalUrlUtil {
 
-    private static final String UNITE_INFIX = "QJ/";
+    public static final String UNITE_INFIX = "QJ/";
 
-    private static final String NON_VPN_PREFIX = "https://qxj.iswufe.info/";
+    public static final String NON_VPN_PREFIX = "https://qxj.iswufe.info/";
 
-    private static final String VPN_PREFIX = "https://webvpn.swufe.edu.cn/" +
+    public static final String VPN_PREFIX = "https://webvpn.swufe.edu.cn/" +
             "https/77726476706e69737468656265737421e1ef4bd22e237f45780dc7a596532c/";
 
     private ApprovalUrlUtil() {

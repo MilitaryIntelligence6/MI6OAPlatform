@@ -1,5 +1,6 @@
 package cn.misection.oaplatform.approval.controller;
 
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import cn.misection.oaplatform.approval.entity.SingleAskForLeave;
 import cn.misection.oaplatform.approval.ui.ApprovalFrame;
@@ -19,6 +20,8 @@ import com.teamdev.jxbrowser.chromium.events.*;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -43,11 +46,15 @@ public class ApprovalController {
 
     private long interval = configProxy.getLong("interval");
 
+    private boolean vpn = configProxy.getBoolean("vpn");
+
     private final ApprovalFrame frame;
 
     private final FuncPanelController funcPanelController;
 
     private String url;
+
+    private RoleMode roleMode = RoleMode.requireOrDefaultByLiteral(configProxy.getSafeString("role"));
 
     public ApprovalController(ApprovalFrame frame) {
         this.frame = frame;
@@ -71,15 +78,8 @@ public class ApprovalController {
     }
 
     private void initState() {
-        if (BuildConfig.DEBUG) {
-            System.out.println("String.format(ApprovalUrlUtil.fetch(configProxy.getBoolean(\"vpn\")), \"FDYSTUList\")" +
-                    "); = "
-                    + ApprovalUrlUtil.fetch(configProxy.getBoolean("vpn")) + "FDYSTUList");
-        }
-        setUrlAndReload(
-                ApprovalUrlUtil.fetch(configProxy.getBoolean("vpn")) +
-                        "FDYSTUList"
-        );
+        reGenUrl();
+        reload();
     }
 
     private void initActionListener() {
@@ -105,10 +105,16 @@ public class ApprovalController {
                             if (BuildConfig.DEBUG) {
                                 System.out.printf("event.getValidatedURL() = %s%n", event.getValidatedURL());
                             }
+                            boolean needReload = false;
+                            DOMDocument document = event.getBrowser().getDocument();
+                            DOMElement titleDom = document.findElement(By.tagName("title"));
+                            if (titleDom != null) {
+                                if (titleDom.getInnerHTML().contains("访问出错")) {
+                                    needReload = true;
+                                }
+                            }
                             if (event.getValidatedURL().contains(";")
-                                    || event.getValidatedURL().contains("jsessionid")
-                                    || event.getBrowser().getDocument().getDocumentElement().getInnerHTML().contains(
-                                    "访问出错")) {
+                                    || event.getValidatedURL().contains("jsessionid") || needReload) {
                                 reload();
                             } else if (event.getValidatedURL().contains("authserver")) {
                                 if (++enterLoginPageTime <= 3) {
@@ -210,6 +216,7 @@ public class ApprovalController {
     }
 
     private void autoLogin() {
+        // FIXME: 2021/10/11 改成 Java;
         frame.getBrowser().executeJavaScript(String.format(
                 JsPool.AUTO_LOGIN.value(),
                 userProxy.getSafeString("username"),
@@ -230,14 +237,18 @@ public class ApprovalController {
         DOMDocument document = frame.getBrowser().getDocument();
         DOMElement dataTablesEmpty = document.findElement(By.className("dataTables_empty"));
         DOMElement tbfDs = document.findElement(By.id("tbf_ds"));
-        boolean caEvalScript = true;
+        boolean canEvalScript = true;
         // empty 不存在(书记页)
-        caEvalScript = caEvalScript && (dataTablesEmpty == null);
+        if (dataTablesEmpty != null) {
+            canEvalScript = false;
+        }
         // tbfds 不是暂无数据;
         if (tbfDs != null) {
-            caEvalScript = caEvalScript && !(tbfDs.getInnerHTML().contains("暂无数据"));
+            if (tbfDs.getInnerHTML().contains("暂无数据")) {
+                canEvalScript = false;
+            }
         }
-        if (caEvalScript) {
+        if (canEvalScript) {
             List<DOMElement> buttonList = document.findElements(By.className("btn btn-success"));
             List<DOMElement> tdList = document.findElements(By.tagName("td"));
             List<DOMElement> passButtonList = new ArrayList<>();
@@ -290,11 +301,33 @@ public class ApprovalController {
         frame.getBrowser().loadURL(url);
     }
 
+    public void reGenUrl() {
+        this.url = String.format(
+                "%s%s%s",
+                vpn
+                        ? ApprovalUrlUtil.VPN_PREFIX
+                        : ApprovalUrlUtil.NON_VPN_PREFIX,
+                ApprovalUrlUtil.UNITE_INFIX,
+                roleMode.getSuffix()
+        );
+    }
+
     private void setUrlAndReload(String url) {
-        if (BuildConfig.DEBUG) {
-            System.out.println("url = " + url);
-        }
         this.url = url;
+        reload();
+    }
+
+    public void setRoleModeAndReload(RoleMode roleMode) {
+        this.roleMode = roleMode;
+        configProxy.putAndSave("role", roleMode.name().toLowerCase(Locale.ROOT));
+        reGenUrl();
+        reload();
+    }
+
+    public void setVpnAndReload(boolean vpn) {
+        this.vpn = vpn;
+        configProxy.putAndSave("vpn", String.valueOf(vpn));
+        reGenUrl();
         reload();
     }
 
@@ -310,6 +343,14 @@ public class ApprovalController {
         return interval;
     }
 
+    public RoleMode getRoleMode() {
+        return roleMode;
+    }
+
+    public boolean isVpn() {
+        return vpn;
+    }
+
     /**
      * ##class FuncPanelController
      */
@@ -318,8 +359,6 @@ public class ApprovalController {
         private final ApprovalController context;
 
         private final ApprovalFrame.FuncPanel funcPanel;
-
-        private RoleMode roleMode;
 
         public FuncPanelController(ApprovalController context) {
             this.context = context;
@@ -334,12 +373,14 @@ public class ApprovalController {
         }
 
         private void initState() {
-            this.roleMode = RoleMode.requireOrDefaultByLiteral(configProxy.getSafeString("role"));
+            if (BuildConfig.DEBUG) {
+                System.out.println("roleMode.name() = " + context.getRoleMode().name());
+            }
             funcPanel.getIntervalField().setText(String.valueOf(context.getInterval()));
             funcPanel.getUsernameField().setText(userProxy.getSafeString("username"));
             funcPanel.getPasswordField().setText(userProxy.getSafeString("password"));
-            funcPanel.getFsjModButton().setSelected(roleMode == RoleMode.FSJ);
-            funcPanel.getFdyModButton().setSelected(roleMode == RoleMode.FDY);
+            funcPanel.getFsjModButton().setSelected(context.getRoleMode() == RoleMode.FSJ);
+            funcPanel.getFdyModButton().setSelected(context.getRoleMode() == RoleMode.FDY);
         }
 
         private void initController() {
@@ -378,29 +419,38 @@ public class ApprovalController {
                             return;
                         }
                         configProxy.putAndSave("interval", intervalString);
+                        context.setInterval(Convert.toInt(intervalString, 60));
                         DialogPopper.info("保存成功", "时间间隔保存成功, 将在重启后生效");
                     }
             );
 
+            funcPanel.getVpnModeSwitch().addMouseListener(
+                    new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            super.mouseClicked(e);
+                            configProxy.putAndSave("");
+                            if (BuildConfig.DEBUG) {
+                                System.out.println("onClicked my toggle");
+                            }
+                        }
+                    }
+            );
+
+//            funcPanel.getDarkModToggleButton()
+
             funcPanel.getFdyModButton().addChangeListener(
                     e -> {
-                        roleMode = funcPanel.getFdyModButton().isSelected()
-                                ? RoleMode.FDY
-                                : RoleMode.FSJ;
-                        configProxy.putAndSave("role", roleMode.name().toLowerCase(Locale.ROOT));
-                        context.setUrlAndReload(
-                                ApprovalUrlUtil.fetch(configProxy.getBoolean("vpn"), roleMode));
+                        context.setRoleModeAndReload(
+                                funcPanel.getFdyModButton().isSelected()
+                                        ? RoleMode.FDY
+                                        : RoleMode.FSJ
+                        );
                     }
             );
 
             funcPanel.getReloadButton().addActionListener(
-                    e -> context.setUrlAndReload(ApprovalUrlUtil.fetch(configProxy.getBoolean("vpn"), roleMode))
-            );
-        }
-
-        private void setRoleAndSwitch(RoleMode roleMode) {
-            this.roleMode = roleMode;
-            context.setUrlAndReload(ApprovalUrlUtil.fetch(configProxy.getBoolean("vpn"), roleMode));
+                    e -> context.reload());
         }
     }
 }

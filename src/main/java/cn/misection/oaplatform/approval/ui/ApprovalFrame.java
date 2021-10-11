@@ -99,22 +99,24 @@ public class ApprovalFrame extends JFrame {
 
         private final JButton reloadButton = new JButton("刷新页面");
 
+        private final MyToggleButton vpnModeSwitch = new MyToggleButton() {
+            {
+                setPreferredSize(switchDimen);
+            }
+        };
+
+        private final DarkModToggleButton darkModToggleButton = new DarkModToggleButton() {
+            {
+                setPreferredSize(switchDimen);
+            }
+        };
+
         private final JPanel switchPanel = new JPanel() {
             {
                 setLayout(panelSplitLayout);
                 final JPanel vpnPanel = new JPanel() {
                     {
                         setLayout(splitLayout);
-                        final MyToggleButton vpnModeSwitch = new MyToggleButton(new MouseAdapter() {
-                            @Override
-                            public void mouseClicked(MouseEvent e) {
-                                super.mouseClicked(e);
-                                if (BuildConfig.DEBUG) {
-                                    System.out.println("onClicked my toggle");
-                                }
-                            }
-                        });
-                        vpnModeSwitch.setPreferredSize(switchDimen);
                         add(new JLabel("WebVpn 模式"));
                         add(vpnModeSwitch);
                     }
@@ -123,8 +125,6 @@ public class ApprovalFrame extends JFrame {
                 final JPanel darkModPanel = new JPanel() {
                     {
                         setLayout(splitLayout);
-                        final DarkModToggleButton darkModToggleButton = new DarkModToggleButton();
-                        darkModToggleButton.setPreferredSize(switchDimen);
                         add(new JLabel("夜间模式"));
                         add(darkModToggleButton);
                     }
@@ -251,6 +251,14 @@ public class ApprovalFrame extends JFrame {
 
         public JButton getReloadButton() {
             return reloadButton;
+        }
+
+        public MyToggleButton getVpnModeSwitch() {
+            return vpnModeSwitch;
+        }
+
+        public DarkModToggleButton getDarkModToggleButton() {
+            return darkModToggleButton;
         }
     }
 }

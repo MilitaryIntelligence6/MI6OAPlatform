@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
@@ -52,6 +53,20 @@ public class MyToggleButton extends JPanel {
             toggle();
         }
     };
+
+    public MyToggleButton() {
+        this.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                super.mousePressed(e);
+                if (stateListener != null) {
+                    stateListener.stateChanged(this);
+                }
+                // FIXME: 2021/10/8 对比;
+//                toggle();
+            }
+        });
+    }
 
     /**
      * 添加鼠标事件;
