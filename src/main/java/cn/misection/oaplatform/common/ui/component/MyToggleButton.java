@@ -42,7 +42,7 @@ public class MyToggleButton extends JPanel {
     /**
      * 开关, ON/OFF;
      */
-    private boolean selected = SkinManager.isBeenDark();
+    private boolean selected;
 
     /**
      * 监听属性;

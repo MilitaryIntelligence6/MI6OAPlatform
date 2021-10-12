@@ -5,7 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.Log;
 import cn.misection.oaplatform.approval.entity.SingleAskForLeave;
 import cn.misection.oaplatform.approval.ui.ApprovalFrame;
-import cn.misection.oaplatform.common.constant.JsPool;
 import cn.misection.oaplatform.common.constant.RoleMode;
 import cn.misection.oaplatform.config.BuildConfig;
 import cn.misection.oaplatform.config.ResourceBundle;
@@ -54,6 +53,8 @@ public class ApprovalController {
     private final ApprovalFrame frame;
 
     private final FuncPanelController funcPanelController;
+
+    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
     private String url;
 
@@ -121,8 +122,12 @@ public class ApprovalController {
                                 } else {
                                     DialogPopper.error("由于三次尝试帮您自动登录失败, 可能是账户密码输入错误的原因, 请检查左边板块的账号秘钥重新登录");
                                 }
-                            } else if (event.getValidatedURL().contains("FSJCheckQJLists") || event.getValidatedURL().contains("FDYSTUList")) {
-                                autoApprovalSingleTask();
+                            } else if (event.getValidatedURL().contains("FSJCheckQJLists") || event.getValidatedURL
+                            ().contains("FDYSTUList")) {
+                                executorService.schedule(
+                                        ApprovalController.this::autoApprovalSingleTask,
+                                        5,
+                                        TimeUnit.SECONDS);
                             }
                         }
                     }
@@ -216,11 +221,24 @@ public class ApprovalController {
 
     private void autoLogin() {
         // FIXME: 2021/10/11 改成 Java;
-        frame.getBrowser().executeJavaScript(String.format(
-                JsPool.AUTO_LOGIN.value(),
-                userProxy.getSafeString("username"),
-                userProxy.getSafeString("password")
-        ));
+        DOMDocument document = frame.getBrowser().getDocument();
+        DOMElement usernameField = document.findElement(By.id("username"));
+        DOMElement passwordField = document.findElement(By.id("password"));
+        DOMElement icheckHelper = document.findElement(By.className("iCheck-helper"));
+        DOMElement authLoginBtnPrimaryFullWidth = document.findElement(By.className("auth_login_btn primary " +
+                "full_width"));
+        if (usernameField != null) {
+            usernameField.setAttribute("value", userProxy.getSafeString("username"));
+        }
+        if (passwordField != null) {
+            passwordField.setAttribute("value", userProxy.getSafeString("password"));
+        }
+        if (icheckHelper != null) {
+            icheckHelper.click();
+        }
+        if (authLoginBtnPrimaryFullWidth != null) {
+            authLoginBtnPrimaryFullWidth.click();
+        }
     }
 
     private void initApprovalLooper() {
@@ -252,6 +270,9 @@ public class ApprovalController {
             List<DOMElement> tdList = document.findElements(By.tagName("td"));
             List<DOMElement> passButtonList = new ArrayList<>();
             List<DOMElement> durationList = new ArrayList<>();
+
+            List<SingleAskForLeave> singleList = new ArrayList<>();
+
             for (DOMElement button : buttonList) {
                 if ("请假通过".equals(button.getAttribute("value"))) {
                     passButtonList.add(button);
@@ -263,10 +284,9 @@ public class ApprovalController {
                 }
             }
             if (passButtonList.size() != durationList.size()) {
-                DialogPopper.error("出现了兼容性异常!请联系开发者解决");
+                DialogPopper.error("出现了兼容性异常! 请联系开发者解决");
                 return;
             }
-            List<SingleAskForLeave> singleList = new ArrayList<>();
             for (int i = 0, size = durationList.size(); i < size; i++) {
                 singleList.add(new SingleAskForLeave(
                         durationList.get(i).getInnerHTML(),
@@ -289,6 +309,8 @@ public class ApprovalController {
                             logger.debug("ele.getInnerHTML() = " + ele.getInnerHTML());
                         }
                 );
+                logger.debug("buttonList.size() = " + buttonList.size());
+                logger.debug("tdList.size() = " + tdList.size());
                 logger.debug("passButtonList.size() = " + passButtonList.size());
                 logger.debug("durationList.size() = " + durationList.size());
             }
@@ -419,8 +441,8 @@ public class ApprovalController {
             funcPanel.getVpnModeSwitch().addMouseListener(
                     new MouseAdapter() {
                         @Override
-                        public void mouseClicked(MouseEvent e) {
-                            super.mouseClicked(e);
+                        public void mousePressed(MouseEvent e) {
+                            super.mousePressed(e);
                             context.saveVpnAndReload(!configProxy.getBoolean("vpn"));
                             if (BuildConfig.DEBUG) {
                                 logger.debug("onClicked vpn");
@@ -432,8 +454,8 @@ public class ApprovalController {
             funcPanel.getDarkModSwitch().addMouseListener(
                     new MouseAdapter() {
                         @Override
-                        public void mouseClicked(MouseEvent e) {
-                            super.mouseClicked(e);
+                        public void mousePressed(MouseEvent e) {
+                            super.mousePressed(e);
                             configProxy.putAndSave("dark", String.valueOf(!configProxy.getBoolean("dark")));
                             DialogPopper.info("切换皮肤成功, 将在重启后生效");
                             if (BuildConfig.DEBUG) {

@@ -110,10 +110,18 @@ public class ApprovalFrame extends JFrame {
 
         private final JPanel titlePanel = new JPanel() {
             {
-                setLayout(splitLayout);
+                setLayout(panelSplitLayout);
                 add(new JPanel());
-                add(new JLabel("控制面板"));
-                add(new JLabel("MI6 控制台"));
+                add(new JPanel() {
+                    {
+                        add(new JLabel("控制面板"));
+                    }
+                });
+                add(new JPanel() {
+                    {
+                        add(new JLabel("MI6 控制台"));
+                    }
+                });
             }
         };
 
@@ -200,6 +208,22 @@ public class ApprovalFrame extends JFrame {
             }
         };
 
+        private final JPanel copyRightPanel = new JPanel() {
+            {
+                setLayout(panelSplitLayout);
+                add(new JPanel() {
+                    {
+                        add(new JLabel("版权所有: MI6"));
+                    }
+                });
+                add(new JPanel() {
+                    {
+                        add(new JLabel("Copyright (c) 2021 MI6 "));
+                    }
+                });
+            }
+        };
+
         public FuncPanel() {
             this.setLayout(new GridLayout(5, 1, 10, 20));
             this.setPreferredSize(new Dimension(200, 0));
@@ -208,6 +232,7 @@ public class ApprovalFrame extends JFrame {
             this.add(userPanel);
             this.add(switchPanel);
             this.add(controlPanel);
+            this.add(copyRightPanel);
         }
 
         public JTextField getUsernameField() {
